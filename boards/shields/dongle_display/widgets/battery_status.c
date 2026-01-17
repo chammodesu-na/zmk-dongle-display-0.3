@@ -102,8 +102,12 @@ void battery_status_update_cb(struct battery_state state) {
 
 static struct battery_state peripheral_battery_status_get_state(const zmk_event_t *eh) {
     const struct zmk_peripheral_battery_state_changed *ev = as_zmk_peripheral_battery_state_changed(eh);
+    
+    // ★★★ 변경: 왼쪽(1)과 오른쪽(0) 순서 반전 ★★★
+    uint8_t reversed_source = (ev->source == 0) ? 1 : 0;
+    
     return (struct battery_state){
-        .source = ev->source + SOURCE_OFFSET,
+        .source = reversed_source + SOURCE_OFFSET,
         .level = ev->state_of_charge,
     };
 }
