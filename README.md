@@ -41,13 +41,32 @@ For setup examples, refer to the shields in my [`zmk-config`](https://github.com
 - If you are using the smaller 0.91" OLED, replace `height = <64>;` by `height = <32>;`
 
 ## Widgets
-- active hid indicators (CLCK, NLCK, SLCK)
-- active modifiers
-- bongo cat
-- highest layer name
-- output status
-- peripheral battery levels
-- WPM meter
+
+The screen is split into three bands:
+
+```
++--------------------------------------+
+| BT1 (*)                    L87% R41% |  active endpoint + battery levels
+|--------------------------------------|
+|                QWERTY                |  active layer
+|                                      |
+| [#][A][^][^]                    CLCK |  modifiers + lock state
++--------------------------------------+
+```
+
+- **output status** — the selected endpoint spelled out (`USB`, `BT1` … `BT5`)
+  in the 8x16 font, followed by a link indicator: a filled dot when connected
+  (or when USB HID is ready), a thick ring when the profile is paired but
+  currently disconnected, and a thin ring when the profile is still open.
+- **battery levels** — in the top right corner beside the endpoint. Halves are
+  labelled `L`/`R`, the dongle (when enabled) `D`, and a device powered over
+  USB shows `CHG`. Two batteries fit on one line; a third makes them stack,
+  and the rest of the screen moves down with the taller band.
+- **highest layer name** — alone in the middle band, 8x16 font, centred by
+  default.
+- **active modifiers** — a bright frame is drawn around each held modifier.
+- **active hid indicators** (CLCK, NLCK, SLCK)
+- **WPM meter** (off by default)
 
 ## Configuration
 
@@ -101,10 +120,9 @@ CONFIG_ZMK_DONGLE_DISPLAY_WPM_DISABLED_LAYERS="layers" # comma separated
 
 ## Smaller OLEDs, with 128x32 pixels
 
-To allow smaller OLEDs, with 128x32 pixels, it will be necessary to exclude some widgets, like the bongo cat, active modifiers or the highest layer name. You can do it with the following config entries:
+To allow smaller OLEDs, with 128x32 pixels, it will be necessary to exclude some widgets, like the active modifiers or the highest layer name. You can do it with the following config entries:
 
 ```ini
-CONFIG_ZMK_DONGLE_DISPLAY_BONGO_CAT=n
 CONFIG_ZMK_DONGLE_DISPLAY_MODIFIERS=n
 CONFIG_ZMK_DONGLE_DISPLAY_LAYER=n
 ```
@@ -114,10 +132,6 @@ It is also necessary to reduce the buffer size, otherwise the I2C communication 
 ```ini
 CONFIG_LV_Z_VDB_SIZE=32
 ```
-
-## Demo
-![output](https://github.com/englmaxi/zmk-config/assets/43675074/8d268f23-1a4f-44c3-817e-c36dc96a1f8b)
-![mods](https://github.com/englmaxi/zmk-config/assets/43675074/af9ec3f5-8f61-4629-abed-14ba0047f0bd)
 
 ## Dongle Designs
 - [case1](/cases)

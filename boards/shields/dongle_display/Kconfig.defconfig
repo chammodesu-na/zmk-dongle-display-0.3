@@ -10,11 +10,9 @@ endchoice
 config ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
     select LV_USE_LABEL
     select LV_USE_IMG
-    select LV_USE_CANVAS
-    select LV_USE_ANIMIMG 
     select LV_USE_ANIMATION
-    select LV_USE_LINE 
     select LV_FONT_UNSCII_8
+    select LV_FONT_UNSCII_16
     select ZMK_WPM
     imply ZMK_HID_INDICATORS
 
@@ -24,10 +22,6 @@ config ZMK_DONGLE_DISPLAY_DONGLE_BATTERY
 
 config ZMK_DONGLE_DISPLAY_MAC_MODIFIERS
     bool "Use MacOS modifier symbols instead of the Windows symbols"
-
-config ZMK_DONGLE_DISPLAY_BONGO_CAT
-    bool "Display the Bongo Cat widget"
-    default y
 
 config ZMK_DONGLE_DISPLAY_MODIFIERS
     bool "Display the modifiers widget"
@@ -39,14 +33,16 @@ config ZMK_DONGLE_DISPLAY_LAYER
 
 config ZMK_DONGLE_DISPLAY_LAYER_NAME_SCROLL_WIDTH
     int "Width for layer name label (in pixels)"
-    default 50
+    default 128
     help
         Width in pixels for the layer name label. When the layer name
         exceeds this width, it will scroll horizontally in a circular pattern.
+        The layer name is drawn in the 8x16 font in its own band, so the
+        default spans the panel and fits sixteen characters.
 
 config ZMK_DONGLE_DISPLAY_LAYER_TEXT_ALIGN
     string "Layer name text alignment"
-    default "left"
+    default "center"
     help
         Text alignment for the layer name label. Valid values: "left", "center", "right".
 
