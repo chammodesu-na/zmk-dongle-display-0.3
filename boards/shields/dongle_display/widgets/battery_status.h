@@ -16,3 +16,7 @@ struct zmk_widget_dongle_battery_status {
 
 int zmk_widget_dongle_battery_status_init(struct zmk_widget_dongle_battery_status *widget, lv_obj_t *parent);
 lv_obj_t *zmk_widget_dongle_battery_status_obj(struct zmk_widget_dongle_battery_status *widget);
+
+/* Pixel height the widget occupies, so the screen can place the bands below
+ * it. Zero when no battery source is configured. */
+int zmk_widget_dongle_battery_status_height(void);

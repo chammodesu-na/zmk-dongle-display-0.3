@@ -34,18 +34,17 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #define BATTERY_SOURCES (ZMK_SPLIT_BLE_PERIPHERAL_COUNT + SOURCE_OFFSET)
 
-/* All battery levels share a single line of the 8x16 font, which is the
- * largest crisp bitmap font available:
+/* One battery per line, stacked in the top right corner next to the
+ * endpoint:
  *
- *   L 87%  R 41%
+ *   BT1 (*)                                                          L 87%
+ *                                                                    R 41%
  *
- * That is 16 characters at most across a 128px panel. Once a third battery
- * or a three-digit level no longer fits, the percent signs are dropped
- * rather than shrinking the text.
+ * The small font is used here because the corner is narrow; the widget
+ * reports its own height so the screen can lay the other bands out below
+ * it.
  */
-#define BATTERY_LINE_CHARS 16
-/* Wide enough for every source at "X 100%" plus separators, so the line is
- * never truncated and its true length can be measured. */
+#define BATTERY_LINE_H     8
 #define BATTERY_TEXT_LEN   (BATTERY_SOURCES * 8 + 1)
 
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
@@ -87,10 +86,7 @@ static const char *source_name(int index) {
     }
 }
 
-/* Writes the line into buf (sized BATTERY_TEXT_LEN) and returns its length in
- * characters, so the caller can retry with a narrower format when it does not
- * fit the panel. */
-static size_t format_levels(char *buf, bool with_percent) {
+static void format_levels(char *buf) {
     size_t used = 0;
 
     buf[0] = '\0';
@@ -105,15 +101,12 @@ static size_t format_levels(char *buf, bool with_percent) {
         if (battery_levels[i].usb_present) {
             strcpy(value, "CHG");
         } else {
-            snprintf(value, sizeof(value), "%d%s", battery_levels[i].level,
-                     with_percent ? "%" : "");
+            snprintf(value, sizeof(value), "%d%%", battery_levels[i].level);
         }
 
         used += snprintf(buf + used, BATTERY_TEXT_LEN - used, "%s%s %s",
-                         (used > 0) ? "  " : "", source_name(i), value);
+                         (used > 0) ? "\n" : "", source_name(i), value);
     }
-
-    return used;
 }
 
 static void set_battery_symbol(lv_obj_t *label, struct battery_state state) {
@@ -131,10 +124,7 @@ static void set_battery_symbol(lv_obj_t *label, struct battery_state state) {
 
     char text[BATTERY_TEXT_LEN];
 
-    if (format_levels(text, true) > BATTERY_LINE_CHARS) {
-        format_levels(text, false);
-    }
-
+    format_levels(text);
     lv_label_set_text(label, text);
 }
 
@@ -192,10 +182,9 @@ ZMK_SUBSCRIPTION(widget_dongle_battery_status, zmk_usb_conn_state_changed);
 int zmk_widget_dongle_battery_status_init(struct zmk_widget_dongle_battery_status *widget, lv_obj_t *parent) {
     widget->obj = lv_label_create(parent);
 
-    lv_obj_set_width(widget->obj, 128);
-    lv_obj_set_style_text_font(widget->obj, &lv_font_unscii_16, 0);
     lv_obj_set_style_text_letter_space(widget->obj, 0, 0);
-    lv_obj_set_style_text_align(widget->obj, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_line_space(widget->obj, 0, 0);
+    lv_obj_set_style_text_align(widget->obj, LV_TEXT_ALIGN_RIGHT, 0);
     lv_label_set_text(widget->obj, "");
 
     sys_slist_append(&widgets, &widget->node);
@@ -207,4 +196,8 @@ int zmk_widget_dongle_battery_status_init(struct zmk_widget_dongle_battery_statu
 
 lv_obj_t *zmk_widget_dongle_battery_status_obj(struct zmk_widget_dongle_battery_status *widget) {
     return widget->obj;
+}
+
+int zmk_widget_dongle_battery_status_height(void) {
+    return BATTERY_SOURCES * BATTERY_LINE_H;
 }
