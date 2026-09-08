@@ -18,15 +18,14 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 /* Layout for a 128x64 panel, three bands separated by a rule:
  *
  *   +--------------------------------------+
- *   | BT1 (*)                        L 87% |  0..15  endpoint + batteries
- *   |                                R 41% |
+ *   | BT1 (*)                    L87% R41% |  0..15  endpoint + batteries
  *   |--------------------------------------|         divider
  *   |                QWERTY                |         active layer, centred
  *   |                                      |
  *   | [#][A][^][^]                    CLCK |  46..63 modifiers + lock state
  *   +--------------------------------------+
  *
- * The top band grows with the number of batteries, so the divider and the
+ * The top band grows if the batteries have to stack, so the divider and the
  * layer name are placed from its measured height rather than a fixed offset.
  * On a 128x32 panel the layer band is what gets clipped first.
  */

@@ -46,8 +46,7 @@ The screen is split into three bands:
 
 ```
 +--------------------------------------+
-| BT1 (*)                        L 87% |  active endpoint + battery levels
-|                                R 41% |
+| BT1 (*)                    L87% R41% |  active endpoint + battery levels
 |--------------------------------------|
 |                QWERTY                |  active layer
 |                                      |
@@ -59,10 +58,10 @@ The screen is split into three bands:
   in the 8x16 font, followed by a link indicator: a filled dot when connected
   (or when USB HID is ready), a thick ring when the profile is paired but
   currently disconnected, and a thin ring when the profile is still open.
-- **battery levels** — stacked in the top right corner, one device per line.
-  Halves are labelled `L`/`R`, the dongle (when enabled) `D`, and a device
-  powered over USB shows `CHG`. The band grows with the number of batteries
-  and the rest of the screen moves down with it.
+- **battery levels** — in the top right corner beside the endpoint. Halves are
+  labelled `L`/`R`, the dongle (when enabled) `D`, and a device powered over
+  USB shows `CHG`. Two batteries fit on one line; a third makes them stack,
+  and the rest of the screen moves down with the taller band.
 - **highest layer name** — alone in the middle band, 8x16 font, centred by
   default.
 - **active modifiers** — a bright frame is drawn around each held modifier.

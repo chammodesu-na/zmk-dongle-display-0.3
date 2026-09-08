@@ -28,24 +28,31 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
     #define SOURCE_OFFSET 0
 #endif
 
+/* ZMK defines this when the split central headers are in scope. Fall back to
+ * the Kconfig value it is derived from, so the widget still knows how many
+ * peripherals to expect rather than silently dropping them all. */
 #ifndef ZMK_SPLIT_BLE_PERIPHERAL_COUNT
-#  define ZMK_SPLIT_BLE_PERIPHERAL_COUNT 0
+#  if defined(CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS)
+#    define ZMK_SPLIT_BLE_PERIPHERAL_COUNT CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS
+#  else
+#    define ZMK_SPLIT_BLE_PERIPHERAL_COUNT 0
+#  endif
 #endif
 
 #define BATTERY_SOURCES (ZMK_SPLIT_BLE_PERIPHERAL_COUNT + SOURCE_OFFSET)
 
-/* One battery per line, stacked in the top right corner next to the
- * endpoint:
+/* The batteries sit in the top right corner, beside the endpoint:
  *
- *   BT1 (*)                                                          L 87%
- *                                                                    R 41%
+ *   BT1 (*)                                                     L87% R41%
  *
- * The small font is used here because the corner is narrow; the widget
- * reports its own height so the screen can lay the other bands out below
- * it.
+ * The corner is 11 characters wide once the endpoint has taken its share of
+ * the 128px, which is exactly what two batteries need at their widest
+ * ("L100% R100%"). A third battery cannot fit on one line, so it stacks
+ * instead and the widget reports the taller height to the screen.
  */
+#define BATTERY_ONE_LINE   (BATTERY_SOURCES <= 2)
 #define BATTERY_LINE_H     8
-#define BATTERY_TEXT_LEN   (BATTERY_SOURCES * 8 + 1)
+#define BATTERY_TEXT_LEN   (BATTERY_SOURCES * 7 + 1)
 
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
 
@@ -104,8 +111,9 @@ static void format_levels(char *buf) {
             snprintf(value, sizeof(value), "%d%%", battery_levels[i].level);
         }
 
-        used += snprintf(buf + used, BATTERY_TEXT_LEN - used, "%s%s %s",
-                         (used > 0) ? "\n" : "", source_name(i), value);
+        used += snprintf(buf + used, BATTERY_TEXT_LEN - used, "%s%s%s",
+                         (used > 0) ? (BATTERY_ONE_LINE ? " " : "\n") : "",
+                         source_name(i), value);
     }
 }
 
@@ -199,5 +207,5 @@ lv_obj_t *zmk_widget_dongle_battery_status_obj(struct zmk_widget_dongle_battery_
 }
 
 int zmk_widget_dongle_battery_status_height(void) {
-    return BATTERY_SOURCES * BATTERY_LINE_H;
+    return (BATTERY_ONE_LINE ? 1 : BATTERY_SOURCES) * BATTERY_LINE_H;
 }
