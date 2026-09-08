@@ -48,8 +48,7 @@ The screen is split into three bands:
 +--------------------------------------+
 | BT1 (*)                       QWERTY |  active endpoint + active layer
 |--------------------------------------|
-| L ||||||||||||||||          87%      |  battery gauges
-| R |||||||||                 41%      |
+|          L 87%  R 41%                |  battery levels
 |                                      |
 | [#][A][^][^]                    CLCK |  modifiers + lock state
 +--------------------------------------+
@@ -60,9 +59,10 @@ The screen is split into three bands:
   (or when USB HID is ready), a thick ring when the profile is paired but
   currently disconnected, and a thin ring when the profile is still open.
 - **highest layer name** — right aligned in the same band, 8x16 font.
-- **battery levels** — one row per device with a gauge bar and the exact
-  percentage. Halves are labelled `L`/`R`, the dongle (when enabled) `D`.
-  A device powered over USB shows `CHG`.
+- **battery levels** — every device on one line in the 8x16 font. Halves are
+  labelled `L`/`R`, the dongle (when enabled) `D`, and a device powered over
+  USB shows `CHG`. When a third battery no longer fits across the panel, the
+  percent signs are dropped rather than the text shrinking.
 - **active modifiers** — a bright frame is drawn around each held modifier.
 - **active hid indicators** (CLCK, NLCK, SLCK)
 - **WPM meter** (off by default)

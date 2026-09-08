@@ -20,8 +20,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
  *   +--------------------------------------+
  *   | BT1 (*)                       QWERTY |  0..15  endpoint + active layer
  *   |--------------------------------------|  16     divider
- *   | L |||||||||||||||          87%       |  18..   battery gauges
- *   | R ||||||||                  41%       |
+ *   |          L 87%  R 41%                |  23..38 battery levels
  *   |                                      |
  *   | [#][A][^][^]                    CLCK |  46..63 modifiers + lock state
  *   +--------------------------------------+
@@ -30,7 +29,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
  */
 #define TOP_BAND_H     16
 #define DIVIDER_Y      16
-#define BATTERY_Y      18
+#define BATTERY_Y      23
 #define BOTTOM_BAND_H  MODIFIER_CELL_SIZE
 
 static struct zmk_widget_output_status output_status_widget;
@@ -89,7 +88,7 @@ lv_obj_t *zmk_display_status_screen() {
 #if IS_ENABLED(CONFIG_ZMK_BATTERY)
     zmk_widget_dongle_battery_status_init(&dongle_battery_status_widget, screen);
     lv_obj_align(zmk_widget_dongle_battery_status_obj(&dongle_battery_status_widget),
-                 LV_ALIGN_TOP_LEFT, 0, BATTERY_Y);
+                 LV_ALIGN_TOP_MID, 0, BATTERY_Y);
 #endif
 
 #if IS_ENABLED(CONFIG_ZMK_DONGLE_DISPLAY_MODIFIERS)
