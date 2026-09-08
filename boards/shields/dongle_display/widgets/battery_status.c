@@ -30,6 +30,25 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #  define ZMK_SPLIT_BLE_PERIPHERAL_COUNT 0
 #endif
 
+#define BATTERY_SOURCES (ZMK_SPLIT_BLE_PERIPHERAL_COUNT + SOURCE_OFFSET)
+
+/* One row per battery: name, gauge bar, percentage.
+ *
+ *   L |||||||||     87%
+ *
+ * The bar is the part that is readable at a glance, the number is there for
+ * when you actually care about the exact value.
+ */
+#define ROW_NAME_W   9
+#define ROW_BAR_X    (ROW_NAME_W + 2)
+#define ROW_BAR_W    73
+#define ROW_BAR_H    9
+#define ROW_PCT_W    36
+#define ROW_PITCH    (BATTERY_SOURCES >= 3 ? 9 : 12)
+
+/* Leave a 1px gap inside the outline so the fill never touches the border. */
+#define BAR_FILL_MAX (ROW_BAR_W - 4)
+
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
 
 struct battery_state {
@@ -39,59 +58,69 @@ struct battery_state {
 };
 
 struct battery_object {
-    lv_obj_t *symbol;
+    lv_obj_t *name;
+    lv_obj_t *bar;
+    lv_obj_t *fill;
     lv_obj_t *label;
-} battery_objects[ZMK_SPLIT_BLE_PERIPHERAL_COUNT + SOURCE_OFFSET];
-    
-static lv_color_t battery_image_buffer[ZMK_SPLIT_BLE_PERIPHERAL_COUNT + SOURCE_OFFSET][5 * 8];
+} battery_objects[BATTERY_SOURCES];
 
-static void draw_battery(lv_obj_t *canvas, uint8_t level, bool usb_present) {
-    lv_canvas_fill_bg(canvas, lv_color_black(), LV_OPA_COVER);
-    
-    lv_draw_rect_dsc_t rect_fill_dsc;
-    lv_draw_rect_dsc_init(&rect_fill_dsc);
-
-    if (usb_present) {
-        rect_fill_dsc.bg_opa = LV_OPA_TRANSP;
-        rect_fill_dsc.border_color = lv_color_white();
-        rect_fill_dsc.border_width = 1;
+/* Source 0 is the dongle when its battery is shown, the peripherals follow.
+ * With the usual two halves they are labelled L and R, otherwise numbered.
+ */
+static const char *source_name(int index) {
+#if IS_ENABLED(CONFIG_ZMK_DONGLE_DISPLAY_DONGLE_BATTERY)
+    if (index == 0) {
+        return "D";
     }
-
-    lv_canvas_set_px(canvas, 0, 0, lv_color_white());
-    lv_canvas_set_px(canvas, 4, 0, lv_color_white());
-
-    if (level <= 10 || usb_present) {
-        lv_canvas_draw_rect(canvas, 1, 2, 3, 5, &rect_fill_dsc);
-    } else if (level <= 30) {
-        lv_canvas_draw_rect(canvas, 1, 2, 3, 4, &rect_fill_dsc);
-    } else if (level <= 50) {
-        lv_canvas_draw_rect(canvas, 1, 2, 3, 3, &rect_fill_dsc);
-    } else if (level <= 70) {
-        lv_canvas_draw_rect(canvas, 1, 2, 3, 2, &rect_fill_dsc);
-    } else if (level <= 90) {
-        lv_canvas_draw_rect(canvas, 1, 2, 3, 1, &rect_fill_dsc);
+#endif
+    switch (index - SOURCE_OFFSET) {
+    case 0:
+        return ZMK_SPLIT_BLE_PERIPHERAL_COUNT == 2 ? "L" : "1";
+    case 1:
+        return ZMK_SPLIT_BLE_PERIPHERAL_COUNT == 2 ? "R" : "2";
+    case 2:
+        return "3";
+    case 3:
+        return "4";
+    default:
+        return "?";
     }
 }
 
 static void set_battery_symbol(lv_obj_t *widget, struct battery_state state) {
-    if (state.source >= ZMK_SPLIT_BLE_PERIPHERAL_COUNT + SOURCE_OFFSET) {
+    if (state.source >= BATTERY_SOURCES) {
         return;
     }
     LOG_DBG("source: %d, level: %d, usb: %d", state.source, state.level, state.usb_present);
-    lv_obj_t *symbol = battery_objects[state.source].symbol;
-    lv_obj_t *label = battery_objects[state.source].label;
 
-    draw_battery(symbol, state.level, state.usb_present);
-    lv_label_set_text_fmt(label, "%4u%%", state.level);
-    
-    if (state.level > 0 || state.usb_present) {
-        lv_obj_clear_flag(symbol, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_move_foreground(symbol);
-        lv_obj_clear_flag(label, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_move_foreground(label);
+    struct battery_object *obj = &battery_objects[state.source];
+
+    uint8_t level = state.level > 100 ? 100 : state.level;
+    lv_coord_t fill_w = (BAR_FILL_MAX * level) / 100;
+
+    lv_obj_set_width(obj->fill, fill_w);
+    if (fill_w > 0) {
+        lv_obj_clear_flag(obj->fill, LV_OBJ_FLAG_HIDDEN);
     } else {
-        lv_obj_add_flag(symbol, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(obj->fill, LV_OBJ_FLAG_HIDDEN);
+    }
+
+    if (state.usb_present) {
+        lv_label_set_text(obj->label, "CHG");
+    } else {
+        lv_label_set_text_fmt(obj->label, "%d%%", level);
+    }
+
+    /* A source that has never reported anything stays blank instead of
+     * claiming 0%. */
+    if (state.level > 0 || state.usb_present) {
+        lv_obj_clear_flag(obj->name, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(obj->bar, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(obj->label, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(obj->name, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(obj->bar, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(obj->label, LV_OBJ_FLAG_HIDDEN);
     }
 }
 
@@ -102,10 +131,10 @@ void battery_status_update_cb(struct battery_state state) {
 
 static struct battery_state peripheral_battery_status_get_state(const zmk_event_t *eh) {
     const struct zmk_peripheral_battery_state_changed *ev = as_zmk_peripheral_battery_state_changed(eh);
-    
+
     // ★★★ 변경: 왼쪽(1)과 오른쪽(0) 순서 반전 ★★★
     uint8_t reversed_source = (ev->source == 0) ? 1 : 0;
-    
+
     return (struct battery_state){
         .source = reversed_source + SOURCE_OFFSET,
         .level = ev->state_of_charge,
@@ -148,24 +177,47 @@ ZMK_SUBSCRIPTION(widget_dongle_battery_status, zmk_usb_conn_state_changed);
 
 int zmk_widget_dongle_battery_status_init(struct zmk_widget_dongle_battery_status *widget, lv_obj_t *parent) {
     widget->obj = lv_obj_create(parent);
+    lv_obj_remove_style_all(widget->obj);
+    lv_obj_set_size(widget->obj, ROW_BAR_X + ROW_BAR_W + 2 + ROW_PCT_W,
+                    BATTERY_SOURCES * ROW_PITCH);
 
-    lv_obj_set_size(widget->obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    
-    for (int i = 0; i < ZMK_SPLIT_BLE_PERIPHERAL_COUNT + SOURCE_OFFSET; i++) {
-        lv_obj_t *image_canvas = lv_canvas_create(widget->obj);
-        lv_obj_t *battery_label = lv_label_create(widget->obj);
+    for (int i = 0; i < BATTERY_SOURCES; i++) {
+        lv_coord_t y = i * ROW_PITCH;
 
-        lv_canvas_set_buffer(image_canvas, battery_image_buffer[i], 5, 8, LV_IMG_CF_TRUE_COLOR);
+        lv_obj_t *name = lv_label_create(widget->obj);
+        lv_label_set_text(name, source_name(i));
+        lv_obj_set_pos(name, 0, y + (ROW_BAR_H - 8) / 2);
 
-        lv_obj_align(image_canvas, LV_ALIGN_TOP_RIGHT, 0, i * 10);
-        lv_obj_align(battery_label, LV_ALIGN_TOP_RIGHT, -7, i * 10);
+        lv_obj_t *bar = lv_obj_create(widget->obj);
+        lv_obj_remove_style_all(bar);
+        lv_obj_set_size(bar, ROW_BAR_W, ROW_BAR_H);
+        lv_obj_set_pos(bar, ROW_BAR_X, y);
+        lv_obj_set_style_bg_opa(bar, LV_OPA_TRANSP, 0);
+        lv_obj_set_style_border_width(bar, 1, 0);
+        lv_obj_set_style_border_color(bar, lv_color_white(), 0);
 
-        lv_obj_add_flag(image_canvas, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(battery_label, LV_OBJ_FLAG_HIDDEN);
-        
+        lv_obj_t *fill = lv_obj_create(bar);
+        lv_obj_remove_style_all(fill);
+        lv_obj_set_size(fill, 0, ROW_BAR_H - 4);
+        lv_obj_set_pos(fill, 2, 2);
+        lv_obj_set_style_bg_opa(fill, LV_OPA_COVER, 0);
+        lv_obj_set_style_bg_color(fill, lv_color_white(), 0);
+
+        lv_obj_t *label = lv_label_create(widget->obj);
+        lv_obj_set_width(label, ROW_PCT_W);
+        lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_RIGHT, 0);
+        lv_obj_set_pos(label, ROW_BAR_X + ROW_BAR_W + 2, y + (ROW_BAR_H - 8) / 2);
+        lv_label_set_text(label, "");
+
+        lv_obj_add_flag(name, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(bar, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(label, LV_OBJ_FLAG_HIDDEN);
+
         battery_objects[i] = (struct battery_object){
-            .symbol = image_canvas,
-            .label = battery_label,
+            .name = name,
+            .bar = bar,
+            .fill = fill,
+            .label = label,
         };
     }
 
