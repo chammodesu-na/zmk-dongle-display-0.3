@@ -126,6 +126,10 @@ int zmk_widget_modifiers_init(struct zmk_widget_modifiers *widget, lv_obj_t *par
     lv_obj_remove_style_all(widget->obj);
     lv_obj_set_size(widget->obj, NUM_SYMBOLS * MODIFIER_CELL_SIZE, MODIFIER_CELL_SIZE);
 
+    /* Borrow the colour the labels render in; white is not what shows up on
+     * an inverted panel. */
+    lv_color_t fg = lv_obj_get_style_text_color(parent, LV_PART_MAIN);
+
     for (int i = 0; i < NUM_SYMBOLS; i++) {
         lv_coord_t x = i * MODIFIER_CELL_SIZE;
 
@@ -136,7 +140,7 @@ int zmk_widget_modifiers_init(struct zmk_widget_modifiers *widget, lv_obj_t *par
         lv_obj_set_style_bg_opa(modifier_symbols[i]->highlight, LV_OPA_TRANSP, 0);
         lv_obj_set_style_radius(modifier_symbols[i]->highlight, 2, 0);
         lv_obj_set_style_border_width(modifier_symbols[i]->highlight, 2, 0);
-        lv_obj_set_style_border_color(modifier_symbols[i]->highlight, lv_color_white(), 0);
+        lv_obj_set_style_border_color(modifier_symbols[i]->highlight, fg, 0);
         lv_obj_set_style_border_opa(modifier_symbols[i]->highlight, LV_OPA_TRANSP, 0);
 
         modifier_symbols[i]->symbol = lv_img_create(widget->obj);

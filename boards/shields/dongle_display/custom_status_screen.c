@@ -31,7 +31,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
  */
 #define SCREEN_H       64
 #define TOP_BAND_MIN_H 16
-#define LAYER_H        16
+#define LAYER_H        16 /* lv_font_unscii_16 line height */
 #define BOTTOM_BAND_H  MODIFIER_CELL_SIZE
 
 static struct zmk_widget_output_status output_status_widget;
@@ -87,7 +87,7 @@ lv_obj_t *zmk_display_status_screen() {
     lv_obj_set_size(divider, 128, 1);
     lv_obj_align(divider, LV_ALIGN_TOP_LEFT, 0, top_band_h + 1);
     lv_obj_set_style_bg_opa(divider, LV_OPA_COVER, 0);
-    lv_obj_set_style_bg_color(divider, lv_color_white(), 0);
+    lv_obj_set_style_bg_color(divider, lv_obj_get_style_text_color(screen, LV_PART_MAIN), 0);
 
 #if IS_ENABLED(CONFIG_ZMK_DONGLE_DISPLAY_LAYER)
     /* The layer name gets the whole middle band to itself, in the large font.
@@ -96,6 +96,9 @@ lv_obj_t *zmk_display_status_screen() {
     lv_obj_t *layer_obj = zmk_widget_layer_status_obj(&layer_status_widget);
     lv_obj_set_style_text_font(layer_obj, &lv_font_unscii_16, 0);
     lv_obj_set_style_text_letter_space(layer_obj, 0, 0);
+    /* The label was sized for the small font when it was created, so give it
+     * the large font's line height back. */
+    lv_obj_set_height(layer_obj, lv_font_unscii_16.line_height);
 
     int band_top = top_band_h + 2;
     int band_bottom = SCREEN_H - BOTTOM_BAND_H;

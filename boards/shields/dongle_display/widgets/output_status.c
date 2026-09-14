@@ -134,21 +134,28 @@ ZMK_SUBSCRIPTION(widget_output_status, zmk_usb_conn_state_changed);
 int zmk_widget_output_status_init(struct zmk_widget_output_status *widget, lv_obj_t *parent) {
     widget->obj = lv_obj_create(parent);
     lv_obj_remove_style_all(widget->obj);
-    lv_obj_set_size(widget->obj, 24 + 3 + STATUS_DOT_SIZE, 16);
+    lv_obj_set_size(widget->obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+
+    /* Whatever colour the labels come out as is the one that is actually
+     * visible on the panel, so the shapes borrow it rather than assuming
+     * white. */
+    lv_color_t fg = lv_obj_get_style_text_color(parent, LV_PART_MAIN);
 
     lv_obj_t *label = lv_label_create(widget->obj);
     lv_obj_set_style_text_font(label, &lv_font_unscii_16, 0);
     lv_obj_set_style_text_letter_space(label, 0, 0);
-    lv_obj_align(label, LV_ALIGN_LEFT_MID, 0, 0);
+    /* Positioned rather than aligned: the container sizes itself to these
+     * children, so aligning against it would be circular. */
+    lv_obj_set_pos(label, 0, 0);
     lv_label_set_text(label, "---");
 
     lv_obj_t *dot = lv_obj_create(widget->obj);
     lv_obj_remove_style_all(dot);
     lv_obj_set_size(dot, STATUS_DOT_SIZE, STATUS_DOT_SIZE);
-    lv_obj_align(dot, LV_ALIGN_RIGHT_MID, 0, 0);
+    lv_obj_align_to(dot, label, LV_ALIGN_OUT_RIGHT_MID, 3, 0);
     lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(dot, lv_color_white(), 0);
-    lv_obj_set_style_border_color(dot, lv_color_white(), 0);
+    lv_obj_set_style_bg_color(dot, fg, 0);
+    lv_obj_set_style_border_color(dot, fg, 0);
     set_link_state(dot, link_state_open);
 
     sys_slist_append(&widgets, &widget->node);
