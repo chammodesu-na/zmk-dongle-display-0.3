@@ -96,9 +96,6 @@ lv_obj_t *zmk_display_status_screen() {
     lv_obj_t *layer_obj = zmk_widget_layer_status_obj(&layer_status_widget);
     lv_obj_set_style_text_font(layer_obj, &lv_font_unscii_16, 0);
     lv_obj_set_style_text_letter_space(layer_obj, 0, 0);
-    /* The label was sized for the small font when it was created, so give it
-     * the large font's line height back. */
-    lv_obj_set_height(layer_obj, lv_font_unscii_16.line_height);
 
     int band_top = top_band_h + 2;
     int band_bottom = SCREEN_H - BOTTOM_BAND_H;
