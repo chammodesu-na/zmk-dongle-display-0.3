@@ -38,7 +38,7 @@ static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
  * as a cross.
  */
 #define LINK_GRID_CELLS 3
-#define LINK_GRID_CELL_SIZE 1
+#define LINK_GRID_CELL_SIZE 2
 #define LINK_GRID_SIZE (LINK_GRID_CELLS * LINK_GRID_CELL_SIZE)
 #define LINK_GRID_CENTRE 4
 
