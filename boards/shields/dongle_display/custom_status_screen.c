@@ -18,8 +18,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 /* Layout for a 128x64 panel, three bands separated by a rule:
  *
  *   +--------------------------------------+
- *   | BT1                        L87% R41% |  0..7   endpoint + batteries
- *   |                              CONNECT |  8..15  link state
+ *   | BT1 #                      L87% R41% |  0..15  endpoint + batteries
  *   |--------------------------------------|         divider
  *   |                QWERTY                |         active layer, centred
  *   |                                      |
