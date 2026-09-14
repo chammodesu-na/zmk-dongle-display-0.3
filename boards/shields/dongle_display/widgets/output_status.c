@@ -26,16 +26,15 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
 
 /* The active endpoint is spelled out in the large font ("USB", "BT1" ... "BT5")
- * and the link state is shown as a dot next to it:
- *   filled dot  -> connected / HID ready
- *   thick ring  -> paired, but currently not connected
- *   thin ring   -> profile is open (not paired yet)
+ * on the left of the top band. The link state is a word in the small font
+ * tucked into the opposite corner, under the battery levels, where there is
+ * room for it without crowding the endpoint.
  */
-#define STATUS_DOT_SIZE 11
+#define TOP_BAND_H 16
 
 enum output_child {
     output_child_label,
-    output_child_dot,
+    output_child_status,
 };
 
 enum link_state {
@@ -71,31 +70,28 @@ static struct output_status_state get_state(const zmk_event_t *_eh) {
     return st;
 }
 
-static void set_link_state(lv_obj_t *dot, enum link_state state) {
+static void set_link_state(lv_obj_t *status, enum link_state state) {
     switch (state) {
     case link_state_connected:
-        lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
-        lv_obj_set_style_border_width(dot, 0, 0);
+        lv_label_set_text(status, "CONNECT");
         break;
     case link_state_disconnected:
-        lv_obj_set_style_bg_opa(dot, LV_OPA_TRANSP, 0);
-        lv_obj_set_style_border_width(dot, 3, 0);
+        lv_label_set_text(status, "NO LINK");
         break;
     case link_state_open:
-        lv_obj_set_style_bg_opa(dot, LV_OPA_TRANSP, 0);
-        lv_obj_set_style_border_width(dot, 1, 0);
+        lv_label_set_text(status, "OPEN");
         break;
     }
 }
 
 static void set_status_symbol(lv_obj_t *widget, struct output_status_state state) {
     lv_obj_t *label = lv_obj_get_child(widget, output_child_label);
-    lv_obj_t *dot = lv_obj_get_child(widget, output_child_dot);
+    lv_obj_t *status = lv_obj_get_child(widget, output_child_status);
 
     switch (state.selected_endpoint.transport) {
     case ZMK_TRANSPORT_USB:
         lv_label_set_text(label, "USB");
-        set_link_state(dot, state.usb_is_hid_ready ? link_state_connected
+        set_link_state(status, state.usb_is_hid_ready ? link_state_connected
                                                    : link_state_disconnected);
         break;
     case ZMK_TRANSPORT_BLE: {
@@ -104,16 +100,16 @@ static void set_status_symbol(lv_obj_t *widget, struct output_status_state state
         lv_label_set_text(label, text);
 
         if (!state.active_profile_bonded) {
-            set_link_state(dot, link_state_open);
+            set_link_state(status, link_state_open);
         } else {
-            set_link_state(dot, state.active_profile_connected ? link_state_connected
+            set_link_state(status, state.active_profile_connected ? link_state_connected
                                                                : link_state_disconnected);
         }
         break;
     }
     default:
         lv_label_set_text(label, "---");
-        set_link_state(dot, link_state_open);
+        set_link_state(status, link_state_open);
         break;
     }
 }
@@ -134,29 +130,20 @@ ZMK_SUBSCRIPTION(widget_output_status, zmk_usb_conn_state_changed);
 int zmk_widget_output_status_init(struct zmk_widget_output_status *widget, lv_obj_t *parent) {
     widget->obj = lv_obj_create(parent);
     lv_obj_remove_style_all(widget->obj);
-    lv_obj_set_size(widget->obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-
-    /* Whatever colour the labels come out as is the one that is actually
-     * visible on the panel, so the shapes borrow it rather than assuming
-     * white. */
-    lv_color_t fg = lv_obj_get_style_text_color(parent, LV_PART_MAIN);
+    /* Spans the band so the status word can sit in the far corner; the
+     * parent's own content width is used so the screen's padding is
+     * respected. */
+    lv_obj_set_size(widget->obj, lv_obj_get_content_width(parent), TOP_BAND_H);
 
     lv_obj_t *label = lv_label_create(widget->obj);
     lv_obj_set_style_text_font(label, &lv_font_unscii_16, 0);
     lv_obj_set_style_text_letter_space(label, 0, 0);
-    /* Positioned rather than aligned: the container sizes itself to these
-     * children, so aligning against it would be circular. */
-    lv_obj_set_pos(label, 0, 0);
+    lv_obj_align(label, LV_ALIGN_LEFT_MID, 0, 0);
     lv_label_set_text(label, "---");
 
-    lv_obj_t *dot = lv_obj_create(widget->obj);
-    lv_obj_remove_style_all(dot);
-    lv_obj_set_size(dot, STATUS_DOT_SIZE, STATUS_DOT_SIZE);
-    lv_obj_align_to(dot, label, LV_ALIGN_OUT_RIGHT_MID, 3, 0);
-    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(dot, fg, 0);
-    lv_obj_set_style_border_color(dot, fg, 0);
-    set_link_state(dot, link_state_open);
+    lv_obj_t *status = lv_label_create(widget->obj);
+    lv_obj_align(status, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+    set_link_state(status, link_state_open);
 
     sys_slist_append(&widgets, &widget->node);
 

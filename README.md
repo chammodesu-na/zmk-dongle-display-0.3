@@ -46,7 +46,8 @@ The screen is split into three bands:
 
 ```
 +--------------------------------------+
-| BT1 (*)                    L87% R41% |  active endpoint + battery levels
+| BT1                        L87% R41% |  active endpoint + battery levels
+|                              CONNECT |  link state
 |--------------------------------------|
 |                QWERTY                |  active layer
 |                                      |
@@ -55,9 +56,10 @@ The screen is split into three bands:
 ```
 
 - **output status** — the selected endpoint spelled out (`USB`, `BT1` … `BT5`)
-  in the 8x16 font, followed by a link indicator: a filled dot when connected
-  (or when USB HID is ready), a thick ring when the profile is paired but
-  currently disconnected, and a thin ring when the profile is still open.
+  in the 8x16 font on the left. The link state is a word in the small font in
+  the opposite corner, under the batteries: `CONNECT` when connected (or when
+  USB HID is ready), `NO LINK` when the profile is paired but currently
+  disconnected, and `OPEN` when the profile has no pairing yet.
 - **battery levels** — in the top right corner beside the endpoint. Halves are
   labelled `L`/`R`, the dongle (when enabled) `D`, and a device powered over
   USB shows `CHG`. Two batteries fit on one line; a third makes them stack,

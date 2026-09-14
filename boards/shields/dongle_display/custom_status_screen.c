@@ -18,7 +18,8 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 /* Layout for a 128x64 panel, three bands separated by a rule:
  *
  *   +--------------------------------------+
- *   | BT1 (*)                    L87% R41% |  0..15  endpoint + batteries
+ *   | BT1                        L87% R41% |  0..7   endpoint + batteries
+ *   |                              CONNECT |  8..15  link state
  *   |--------------------------------------|         divider
  *   |                QWERTY                |         active layer, centred
  *   |                                      |
@@ -65,11 +66,6 @@ lv_obj_t *zmk_display_status_screen() {
     lv_style_set_text_letter_space(&global_style, 1);
     lv_style_set_text_line_space(&global_style, 1);
     lv_obj_add_style(screen, &global_style, LV_PART_MAIN);
-
-    /* The layout below works in raw panel coordinates, so the screen must not
-     * keep the theme's padding: it pulls the right hand widgets inwards until
-     * the battery text runs into the endpoint. */
-    lv_obj_set_style_pad_all(screen, 0, LV_PART_MAIN);
 
     int top_band_h = TOP_BAND_MIN_H;
 
