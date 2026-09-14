@@ -41,6 +41,8 @@ static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
 #define LINK_GRID_CELL_SIZE 2
 #define LINK_GRID_SIZE (LINK_GRID_CELLS * LINK_GRID_CELL_SIZE)
 #define LINK_GRID_CENTRE 4
+/* Gap between the endpoint text and the block. */
+#define LINK_GRID_GAP 1
 
 /* Cells of a 3x3 grid in reading order; the edges are the ones that go dark
  * to turn the block into a cross. */
@@ -173,7 +175,7 @@ int zmk_widget_output_status_init(struct zmk_widget_output_status *widget, lv_ob
     lv_obj_t *grid = lv_obj_create(widget->obj);
     lv_obj_remove_style_all(grid);
     lv_obj_set_size(grid, LINK_GRID_SIZE, LINK_GRID_SIZE);
-    lv_obj_align_to(grid, label, LV_ALIGN_OUT_RIGHT_MID, 3, 0);
+    lv_obj_align_to(grid, label, LV_ALIGN_OUT_RIGHT_MID, LINK_GRID_GAP, 0);
 
     for (int i = 0; i < LINK_GRID_CELLS * LINK_GRID_CELLS; i++) {
         lv_obj_t *cell = lv_obj_create(grid);
