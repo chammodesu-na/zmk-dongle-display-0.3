@@ -10,6 +10,7 @@
 #include <zephyr/kernel.h>
 
 #define SIZE_SYMBOLS 14 // 14 x 14 pixel
+#define MODIFIER_CELL_SIZE 18 // icon plus the active-state frame around it
 
 struct zmk_widget_modifiers {
     sys_snode_t node;
