@@ -66,6 +66,12 @@ lv_obj_t *zmk_display_status_screen() {
     lv_style_set_text_line_space(&global_style, 1);
     lv_obj_add_style(screen, &global_style, LV_PART_MAIN);
 
+    /* Halve the theme's left padding: the endpoint and the modifiers sat
+     * further in from the edge than they needed to. The right side keeps its
+     * padding, which is what the battery text is spaced by. */
+    lv_obj_set_style_pad_left(screen, lv_obj_get_style_pad_left(screen, LV_PART_MAIN) / 2,
+                              LV_PART_MAIN);
+
     int top_band_h = TOP_BAND_MIN_H;
 
     zmk_widget_output_status_init(&output_status_widget, screen);
